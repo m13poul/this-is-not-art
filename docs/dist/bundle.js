@@ -231,8 +231,9 @@
     }
     const controls = document.getElementById("controls");
     let hideTimeout = null;
+    let autoHideEnabled = false;
     const showControls = () => {
-      if (controls) {
+      if (controls && autoHideEnabled) {
         controls.classList.remove("hidden");
         if (hideTimeout !== null) {
           clearTimeout(hideTimeout);
@@ -242,20 +243,30 @@
         }, 3e3);
       }
     };
+    if (startButton) {
+      const originalClickHandler = startButton.onclick;
+      startButton.addEventListener("click", () => {
+        if (controls) {
+          controls.classList.add("hidden");
+        }
+        autoHideEnabled = true;
+      });
+    }
     document.addEventListener("mousemove", showControls);
     if (controls) {
       controls.addEventListener("mouseenter", () => {
-        if (hideTimeout !== null) {
+        if (autoHideEnabled && hideTimeout !== null) {
           clearTimeout(hideTimeout);
         }
       });
       controls.addEventListener("mouseleave", () => {
-        hideTimeout = window.setTimeout(() => {
-          controls.classList.add("hidden");
-        }, 3e3);
+        if (autoHideEnabled) {
+          hideTimeout = window.setTimeout(() => {
+            controls.classList.add("hidden");
+          }, 3e3);
+        }
       });
     }
-    showControls();
   });
 })();
 //# sourceMappingURL=bundle.js.map

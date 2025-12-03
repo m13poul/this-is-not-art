@@ -322,9 +322,10 @@ window.addEventListener("load", () => {
   // Auto-hide controls after 3 seconds of mouse inactivity
   const controls = document.getElementById("controls");
   let hideTimeout: number | null = null;
+  let autoHideEnabled = false; // Don't auto-hide until user starts the app
 
   const showControls = () => {
-    if (controls) {
+    if (controls && autoHideEnabled) {
       controls.classList.remove("hidden");
 
       // Clear existing timeout
@@ -339,24 +340,39 @@ window.addEventListener("load", () => {
     }
   };
 
-  // Show controls on mouse move
+  // Enable auto-hide behavior when user clicks start
+  if (startButton) {
+    const originalClickHandler = startButton.onclick;
+    startButton.addEventListener("click", () => {
+      // Hide controls immediately when starting
+      if (controls) {
+        controls.classList.add("hidden");
+      }
+
+      // Enable auto-hide behavior
+      autoHideEnabled = true;
+    });
+  }
+
+  // Show controls on mouse move (only if auto-hide is enabled)
   document.addEventListener("mousemove", showControls);
 
-  // Keep controls visible when mouse is over them
+  // Keep controls visible when mouse is over them (only if auto-hide is enabled)
   if (controls) {
     controls.addEventListener("mouseenter", () => {
-      if (hideTimeout !== null) {
+      if (autoHideEnabled && hideTimeout !== null) {
         clearTimeout(hideTimeout);
       }
     });
 
     controls.addEventListener("mouseleave", () => {
-      hideTimeout = window.setTimeout(() => {
-        controls.classList.add("hidden");
-      }, 3000);
+      if (autoHideEnabled) {
+        hideTimeout = window.setTimeout(() => {
+          controls.classList.add("hidden");
+        }, 3000);
+      }
     });
   }
 
-  // Initially show controls
-  showControls();
+  // Controls start visible by default (CSS handles this)
 });
