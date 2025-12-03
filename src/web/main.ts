@@ -301,4 +301,45 @@ window.addEventListener("load", () => {
       toneGenerator.setInterval(speed);
     });
   }
+
+  // Auto-hide controls after 3 seconds of mouse inactivity
+  const controls = document.getElementById("controls");
+  let hideTimeout: number | null = null;
+
+  const showControls = () => {
+    if (controls) {
+      controls.classList.remove("hidden");
+
+      // Clear existing timeout
+      if (hideTimeout !== null) {
+        clearTimeout(hideTimeout);
+      }
+
+      // Set new timeout to hide after 3 seconds
+      hideTimeout = window.setTimeout(() => {
+        controls.classList.add("hidden");
+      }, 3000);
+    }
+  };
+
+  // Show controls on mouse move
+  document.addEventListener("mousemove", showControls);
+
+  // Keep controls visible when mouse is over them
+  if (controls) {
+    controls.addEventListener("mouseenter", () => {
+      if (hideTimeout !== null) {
+        clearTimeout(hideTimeout);
+      }
+    });
+
+    controls.addEventListener("mouseleave", () => {
+      hideTimeout = window.setTimeout(() => {
+        controls.classList.add("hidden");
+      }, 3000);
+    });
+  }
+
+  // Initially show controls
+  showControls();
 });

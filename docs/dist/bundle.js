@@ -219,6 +219,33 @@
         toneGenerator.setInterval(speed);
       });
     }
+    const controls = document.getElementById("controls");
+    let hideTimeout = null;
+    const showControls = () => {
+      if (controls) {
+        controls.classList.remove("hidden");
+        if (hideTimeout !== null) {
+          clearTimeout(hideTimeout);
+        }
+        hideTimeout = window.setTimeout(() => {
+          controls.classList.add("hidden");
+        }, 3e3);
+      }
+    };
+    document.addEventListener("mousemove", showControls);
+    if (controls) {
+      controls.addEventListener("mouseenter", () => {
+        if (hideTimeout !== null) {
+          clearTimeout(hideTimeout);
+        }
+      });
+      controls.addEventListener("mouseleave", () => {
+        hideTimeout = window.setTimeout(() => {
+          controls.classList.add("hidden");
+        }, 3e3);
+      });
+    }
+    showControls();
   });
 })();
 //# sourceMappingURL=bundle.js.map
