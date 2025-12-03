@@ -24,3 +24,6 @@ npm-debug.log*
 # Temporary files
 *.tmp
 temp_tone.wav
+
+# Memory bank (local development notes)
+MEMORY_BANK.md
