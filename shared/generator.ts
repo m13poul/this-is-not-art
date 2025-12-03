@@ -88,9 +88,10 @@ export function generateBlocks(
 
 /**
  * Draws the Mondrian composition onto a canvas context
+ * Note: Canvas context type is 'any' to work in both browser and Node.js
  */
 export function drawComposition(
-  ctx: CanvasRenderingContext2D,
+  ctx: any,
   blocks: Block[],
   colorChance: number,
   lineWeight: number,
@@ -121,9 +122,10 @@ export function drawComposition(
 /**
  * Generate complete Mondrian composition from parameters
  * This is the main entry point for both client and server
+ * Note: Canvas context type is 'any' to work in both browser and Node.js
  */
 export function generateMondrianComposition(
-  ctx: CanvasRenderingContext2D,
+  ctx: any,
   params: GenerationParams
 ): void {
   const rng = new SeededRandom(params.seed);

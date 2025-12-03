@@ -1,180 +1,30 @@
-// --- Mondrian Generation Logic (Browser-compatible) ---
+/**
+ * Mondrian Web Client - Server-Synchronized Version
+ * Connects to WebSocket server and renders synchronized compositions
+ */
 
-interface Block {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+import { MondrianSocketClient } from "./socket";
+import { generateMondrianComposition, GenerationParams } from "../../shared";
 
-const PRIMARY_COLORS = ["#FF0000", "#0000FF", "#FFFF00"]; // Red, Blue, Yellow
-const BACKGROUND_COLOR = "#FFFFFF"; // White
-const MIN_BLOCK_SIZE = 150; // Adjusted for smaller web canvas
-
-function generateBlocks(
-  block: Block,
-  depth: number,
-  maxDepth: number
-): Block[] {
-  if (depth >= maxDepth) {
-    return [block];
-  }
-
-  if (
-    (block.width < MIN_BLOCK_SIZE && block.height < MIN_BLOCK_SIZE) ||
-    (Math.random() < 0.2 && depth > 0)
-  ) {
-    return [block];
-  }
-
-  const splitHorizontally = block.height > block.width;
-  const splitVertically = block.width > block.height;
-  let blocks: Block[] = [];
-
-  if (splitHorizontally && block.height > MIN_BLOCK_SIZE) {
-    const splitPoint = Math.floor(
-      block.y + block.height * (Math.random() * 0.4 + 0.3)
-    );
-    const blockA: Block = {
-      x: block.x,
-      y: block.y,
-      width: block.width,
-      height: splitPoint - block.y,
-    };
-    const blockB: Block = {
-      x: block.x,
-      y: splitPoint,
-      width: block.width,
-      height: block.y + block.height - splitPoint,
-    };
-
-    blocks = [
-      ...generateBlocks(blockA, depth + 1, maxDepth),
-      ...generateBlocks(blockB, depth + 1, maxDepth),
-    ];
-  } else if (splitVertically && block.width > MIN_BLOCK_SIZE) {
-    const splitPoint = Math.floor(
-      block.x + block.width * (Math.random() * 0.4 + 0.3)
-    );
-    const blockA: Block = {
-      x: block.x,
-      y: block.y,
-      width: splitPoint - block.x,
-      height: block.height,
-    };
-    const blockB: Block = {
-      x: splitPoint,
-      y: block.y,
-      width: block.x + block.width - splitPoint,
-      height: block.height,
-    };
-
-    blocks = [
-      ...generateBlocks(blockA, depth + 1, maxDepth),
-      ...generateBlocks(blockB, depth + 1, maxDepth),
-    ];
-  } else {
-    blocks = [block];
-  }
-
-  return blocks;
-}
-
-function drawComposition(
-  ctx: CanvasRenderingContext2D,
-  blocks: Block[],
-  colorChance: number,
-  lineWeight: number
-): void {
-  // Fill blocks
-  for (const block of blocks) {
-    if (Math.random() < colorChance) {
-      const colorIndex = Math.floor(Math.random() * PRIMARY_COLORS.length);
-      ctx.fillStyle = PRIMARY_COLORS[colorIndex];
-    } else {
-      ctx.fillStyle = BACKGROUND_COLOR;
-    }
-    ctx.fillRect(block.x, block.y, block.width, block.height);
-  }
-
-  // Draw grid
-  ctx.strokeStyle = "#000000";
-  ctx.lineWidth = lineWeight;
-  ctx.lineCap = "butt";
-  ctx.lineJoin = "miter";
-
-  for (const block of blocks) {
-    ctx.strokeRect(block.x, block.y, block.width, block.height);
-  }
-}
-
-const randInt = (min: number, max: number) =>
-  Math.floor(Math.random() * (max - min + 1)) + min;
-const randFloat = (min: number, max: number) =>
-  Math.random() * (max - min) + min;
-
-// --- Tone Generator with Mondrian Sync ---
+// --- Tone Generator (Web Audio API) ---
 
 class ToneGenerator {
   private audioContext: AudioContext;
-  private isRunning: boolean = false;
-  private intervalId: number | null = null;
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
-  private volume: number = 0.1; // Default 40%
-  private interval: number = 1000; // Default 5 seconds
+  private volume: number = 0.1; // Default 10%
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor() {
     this.audioContext = new (window.AudioContext ||
       (window as any).webkitAudioContext)();
-    this.canvas = canvas;
-    this.ctx = canvas.getContext("2d")!;
-
-    // Set canvas size to match window dimensions
-    this.resizeCanvas();
-
-    // Handle window resize and orientation changes
-    window.addEventListener("resize", () => this.resizeCanvas());
-    window.addEventListener("orientationchange", () => {
-      // Slight delay to ensure dimensions are updated after orientation change
-      setTimeout(() => this.resizeCanvas(), 100);
-    });
   }
 
-  private resizeCanvas(): void {
-    // Use actual window dimensions for true full screen
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-
-    // Regenerate the current image with new dimensions
-    if (this.isRunning) {
-      this.generateMondrianImage();
+  async init(): Promise<void> {
+    // Resume the AudioContext if it's suspended
+    if (this.audioContext.state === "suspended") {
+      await this.audioContext.resume();
     }
   }
 
-  private generateMondrianImage(): void {
-    const maxDepth = randInt(4, 6);
-    const colorChance = randFloat(0.2, 0.4);
-    const lineWeight = randInt(12, 30);
-
-    // Clear canvas
-    this.ctx.fillStyle = BACKGROUND_COLOR;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    // Generate blocks
-    const initialBlock: Block = {
-      x: 0,
-      y: 0,
-      width: this.canvas.width,
-      height: this.canvas.height,
-    };
-    const finalBlocks = generateBlocks(initialBlock, 0, maxDepth);
-
-    // Draw composition
-    drawComposition(this.ctx, finalBlocks, colorChance, lineWeight);
-  }
-
-  private playTone(frequency: number, duration: number): void {
+  playTone(frequency: number, duration: number): void {
     const oscillator = this.audioContext.createOscillator();
     const gainNode = this.audioContext.createGain();
 
@@ -184,7 +34,6 @@ class ToneGenerator {
       this.audioContext.currentTime
     );
 
-    // Use the volume property
     gainNode.gain.setValueAtTime(this.volume, this.audioContext.currentTime);
 
     oscillator.connect(gainNode);
@@ -194,83 +43,141 @@ class ToneGenerator {
     oscillator.stop(this.audioContext.currentTime + duration);
   }
 
-  private playCombinationOfTones(duration: number): void {
-    const frequencies = [this.getRandomFrequency(), this.getRandomFrequency()];
-    console.log(
-      `Playing combination of tones at ~${Math.round(
-        frequencies[0]
-      )}Hz and ~${Math.round(frequencies[1])}Hz`
-    );
+  playTones(frequencies: number[], duration: number): void {
     frequencies.forEach((freq) => this.playTone(freq, duration));
+    console.log(
+      `♪ Playing ${frequencies.length} tone(s): ${frequencies
+        .map((f) => Math.round(f))
+        .join("Hz + ")}Hz`
+    );
   }
 
-  private getRandomFrequency(): number {
-    // Frequency range from A3 (220 Hz) to A5 (880 Hz)
-    return Math.random() * (880 - 220) + 220;
-  }
-
-  private generateSoundAndImage(): void {
-    // Generate new Mondrian image
-    this.generateMondrianImage();
-
-    // Play sound
-    const shouldPlayCombination = Math.random() > 0.5;
-    if (shouldPlayCombination) {
-      this.playCombinationOfTones(5);
-    } else {
-      const freq = this.getRandomFrequency();
-      console.log(`Playing single tone at ~${Math.round(freq)}Hz`);
-      this.playTone(freq, 5);
-    }
-  }
-
-  public setVolume(volumePercent: number): void {
-    // Convert percentage (0-100) to gain value (0-1)
+  setVolume(volumePercent: number): void {
     this.volume = volumePercent / 100;
     console.log(`Volume set to ${volumePercent}%`);
   }
+}
 
-  public setInterval(seconds: number): void {
-    this.interval = seconds * 1000; // Convert to milliseconds
-    console.log(`Speed set to ${seconds} seconds`);
+// --- Canvas Manager ---
 
-    // If already running, restart the interval with new timing
-    if (this.isRunning && this.intervalId !== null) {
-      clearInterval(this.intervalId);
-      this.intervalId = window.setInterval(
-        () => this.generateSoundAndImage(),
-        this.interval
-      );
+class CanvasManager {
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
+
+  constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext("2d")!;
+
+    // Set canvas size to match window dimensions
+    this.resizeCanvas();
+
+    // Handle window resize and orientation changes
+    window.addEventListener("resize", () => this.resizeCanvas());
+    window.addEventListener("orientationchange", () => {
+      setTimeout(() => this.resizeCanvas(), 100);
+    });
+  }
+
+  private resizeCanvas(): void {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
+
+  render(params: GenerationParams): void {
+    generateMondrianComposition(this.ctx, params);
+    console.log(`🎨 Rendered: seed=${params.seed}, depth=${params.depth}`);
+  }
+
+  getWidth(): number {
+    return this.canvas.width;
+  }
+
+  getHeight(): number {
+    return this.canvas.height;
+  }
+}
+
+// --- Main Application ---
+
+class MondrianApp {
+  private socketClient: MondrianSocketClient;
+  private toneGenerator: ToneGenerator;
+  private canvasManager: CanvasManager;
+  private isStarted: boolean = false;
+
+  constructor(canvas: HTMLCanvasElement) {
+    this.socketClient = new MondrianSocketClient();
+    this.toneGenerator = new ToneGenerator();
+    this.canvasManager = new CanvasManager(canvas);
+
+    this.setupSocketListeners();
+  }
+
+  private setupSocketListeners(): void {
+    // Handle generation events from server
+    this.socketClient.onGenerate((event) => {
+      if (!this.isStarted) return;
+
+      const params: GenerationParams = {
+        seed: event.seed,
+        depth: event.depth,
+        colorChance: event.colorChance,
+        lineWeight: event.lineWeight,
+        width: this.canvasManager.getWidth(),
+        height: this.canvasManager.getHeight(),
+      };
+
+      this.canvasManager.render(params);
+    });
+
+    // Handle audio events from server
+    this.socketClient.onAudio((event) => {
+      if (!this.isStarted) return;
+      this.toneGenerator.playTones(event.frequencies, event.duration);
+    });
+
+    // Handle user count updates
+    this.socketClient.onUserCount((count) => {
+      console.log(`👥 ${count} user(s) online`);
+      this.updateUserCount(count);
+    });
+
+    // Handle connection status
+    this.socketClient.onConnection((connected) => {
+      if (connected) {
+        console.log("✓ Connected to synchronization server");
+        this.showConnectionStatus("Connected", true);
+      } else {
+        console.log("✗ Disconnected from server");
+        this.showConnectionStatus("Disconnected", false);
+      }
+    });
+  }
+
+  async start(): Promise<void> {
+    await this.toneGenerator.init();
+    this.socketClient.connect();
+    this.isStarted = true;
+    console.log("🚀 Mondrian app started - waiting for server events");
+  }
+
+  setVolume(volumePercent: number): void {
+    this.toneGenerator.setVolume(volumePercent);
+  }
+
+  private updateUserCount(count: number): void {
+    const userCountEl = document.getElementById("userCount");
+    if (userCountEl) {
+      userCountEl.textContent = `${count} user${count !== 1 ? "s" : ""} online`;
     }
   }
 
-  public async start(): Promise<void> {
-    // Resume the AudioContext if it's suspended (which it will be on page load)
-    if (this.audioContext.state === "suspended") {
-      await this.audioContext.resume();
+  private showConnectionStatus(status: string, connected: boolean): void {
+    const statusEl = document.getElementById("connectionStatus");
+    if (statusEl) {
+      statusEl.textContent = status;
+      statusEl.className = connected ? "connected" : "disconnected";
     }
-
-    if (this.isRunning) return;
-    this.isRunning = true;
-    console.log(
-      `Audio and visual engine started. Generating every ${
-        this.interval / 1000
-      } seconds.`
-    );
-
-    this.generateSoundAndImage(); // Play the first tone and show first image immediately
-    this.intervalId = window.setInterval(
-      () => this.generateSoundAndImage(),
-      this.interval
-    );
-  }
-
-  public stop(): void {
-    if (!this.isRunning || this.intervalId === null) return;
-    this.isRunning = false;
-    clearInterval(this.intervalId);
-    this.intervalId = null;
-    console.log("Audio engine stopped.");
   }
 }
 
@@ -282,13 +189,13 @@ window.addEventListener("load", () => {
     return;
   }
 
-  const toneGenerator = new ToneGenerator(canvas);
+  const app = new MondrianApp(canvas);
 
   // Setup start button
   const startButton = document.getElementById("startButton");
   if (startButton) {
     startButton.addEventListener("click", () => {
-      toneGenerator.start();
+      app.start();
       startButton.style.display = "none";
     });
   }
@@ -302,62 +209,47 @@ window.addEventListener("load", () => {
     volumeSlider.addEventListener("input", () => {
       const volume = parseInt(volumeSlider.value, 10);
       volumeValue.textContent = `${volume}%`;
-      toneGenerator.setVolume(volume);
+      app.setVolume(volume);
     });
   }
 
-  // Setup speed control
-  const speedSlider = document.getElementById(
-    "speedSlider"
-  ) as HTMLInputElement;
-  const speedValue = document.getElementById("speedValue");
-  if (speedSlider && speedValue) {
-    speedSlider.addEventListener("input", () => {
-      const speed = parseFloat(speedSlider.value);
-      speedValue.textContent = `${speed.toFixed(1)}s`;
-      toneGenerator.setInterval(speed);
-    });
+  // Speed control is now server-controlled, so hide it or make it read-only
+  const speedControl = document.getElementById("speedControl");
+  if (speedControl) {
+    speedControl.style.display = "none";
   }
 
   // Auto-hide controls after 3 seconds of mouse inactivity
   const controls = document.getElementById("controls");
   let hideTimeout: number | null = null;
-  let autoHideEnabled = false; // Don't auto-hide until user starts the app
+  let autoHideEnabled = false;
 
   const showControls = () => {
     if (controls && autoHideEnabled) {
       controls.classList.remove("hidden");
 
-      // Clear existing timeout
       if (hideTimeout !== null) {
         clearTimeout(hideTimeout);
       }
 
-      // Set new timeout to hide after 3 seconds
       hideTimeout = window.setTimeout(() => {
         controls.classList.add("hidden");
       }, 3000);
     }
   };
 
-  // Enable auto-hide behavior when user clicks start
+  // Enable auto-hide when user clicks start
   if (startButton) {
-    const originalClickHandler = startButton.onclick;
     startButton.addEventListener("click", () => {
-      // Hide controls immediately when starting
       if (controls) {
         controls.classList.add("hidden");
       }
-
-      // Enable auto-hide behavior
       autoHideEnabled = true;
     });
   }
 
-  // Show controls on mouse move (only if auto-hide is enabled)
   document.addEventListener("mousemove", showControls);
 
-  // Keep controls visible when mouse is over them (only if auto-hide is enabled)
   if (controls) {
     controls.addEventListener("mouseenter", () => {
       if (autoHideEnabled && hideTimeout !== null) {
@@ -373,6 +265,4 @@ window.addEventListener("load", () => {
       }
     });
   }
-
-  // Controls start visible by default (CSS handles this)
 });
