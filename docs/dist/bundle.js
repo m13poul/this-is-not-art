@@ -84,9 +84,9 @@
     constructor(canvas) {
       this.isRunning = false;
       this.intervalId = null;
-      this.volume = 0.4;
+      this.volume = 0.1;
       // Default 40%
-      this.interval = 5e3;
+      this.interval = 1e3;
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
       this.canvas = canvas;
       this.ctx = canvas.getContext("2d");
