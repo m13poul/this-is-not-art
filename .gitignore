@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build outputs (Node/TypeScript)
+dist/
+
+# Generated images
+output/
+test-2/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+temp_tone.wav

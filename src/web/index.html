@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mondrian Audio-Visual Generator</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <canvas id="mondrianCanvas"></canvas>
+    <button id="startButton">Click to Start</button>
+    <div id="controls">
+      <div class="control-group">
+        <label for="volumeSlider"
+          >Volume: <span id="volumeValue">40%</span></label
+        >
+        <input type="range" id="volumeSlider" min="0" max="100" value="40" />
+      </div>
+      <div class="control-group">
+        <label for="speedSlider"
+          >Speed: <span id="speedValue">5.0s</span></label
+        >
+        <input
+          type="range"
+          id="speedSlider"
+          min="1"
+          max="10"
+          value="5"
+          step="0.5"
+        />
+      </div>
+    </div>
+    <script src="dist/bundle.js"></script>
+  </body>
+</html>

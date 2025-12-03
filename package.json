@@ -1,0 +1,32 @@
+{
+  "name": "mondrian-generator",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "ts-node src/index.ts",
+    "start-2": "ts-node src/index-2.ts",
+    "build:web": "esbuild src/web/main.ts --bundle --outfile=src/web/dist/bundle.js --sourcemap",
+    "watch:web": "esbuild src/web/main.ts --bundle --outfile=src/web/dist/bundle.js --sourcemap --watch",
+    "deploy": "npm run build:web && cp src/web/index.html src/web/styles.css docs/ && cp src/web/dist/bundle.js src/web/dist/bundle.js.map docs/dist/"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "canvas": "^3.2.0",
+    "commander": "^14.0.2",
+    "play-sound": "^1.1.6",
+    "wav": "^1.0.2"
+  },
+  "devDependencies": {
+    "@types/commander": "^2.12.0",
+    "@types/node": "^24.10.1",
+    "@types/play-sound": "^1.1.2",
+    "@types/wav": "^1.0.4",
+    "esbuild": "^0.27.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
