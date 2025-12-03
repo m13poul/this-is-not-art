@@ -121,8 +121,8 @@ class ToneGenerator {
   private intervalId: number | null = null;
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
-  private volume: number = 0.4; // Default 40%
-  private interval: number = 5000; // Default 5 seconds
+  private volume: number = 0.1; // Default 40%
+  private interval: number = 1000; // Default 5 seconds
 
   constructor(canvas: HTMLCanvasElement) {
     this.audioContext = new (window.AudioContext ||
