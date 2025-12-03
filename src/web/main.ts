@@ -130,9 +130,26 @@ class ToneGenerator {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
 
-    // Set canvas size
-    this.canvas.width = 1920;
-    this.canvas.height = 1080;
+    // Set canvas size to match window dimensions
+    this.resizeCanvas();
+
+    // Handle window resize and orientation changes
+    window.addEventListener("resize", () => this.resizeCanvas());
+    window.addEventListener("orientationchange", () => {
+      // Slight delay to ensure dimensions are updated after orientation change
+      setTimeout(() => this.resizeCanvas(), 100);
+    });
+  }
+
+  private resizeCanvas(): void {
+    // Use actual window dimensions for true full screen
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+
+    // Regenerate the current image with new dimensions
+    if (this.isRunning) {
+      this.generateMondrianImage();
+    }
   }
 
   private generateMondrianImage(): void {

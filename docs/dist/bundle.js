@@ -90,8 +90,18 @@
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
       this.canvas = canvas;
       this.ctx = canvas.getContext("2d");
-      this.canvas.width = 1920;
-      this.canvas.height = 1080;
+      this.resizeCanvas();
+      window.addEventListener("resize", () => this.resizeCanvas());
+      window.addEventListener("orientationchange", () => {
+        setTimeout(() => this.resizeCanvas(), 100);
+      });
+    }
+    resizeCanvas() {
+      this.canvas.width = window.innerWidth;
+      this.canvas.height = window.innerHeight;
+      if (this.isRunning) {
+        this.generateMondrianImage();
+      }
     }
     generateMondrianImage() {
       const maxDepth = randInt(4, 6);
