@@ -1,8 +1,9 @@
 # Dependencies
 node_modules/
 
-# Build outputs (Node/TypeScript)
-dist/
+# Build outputs (Node/TypeScript) - be specific to avoid ignoring docs/dist/
+/dist/
+src/web/dist/
 
 # Generated images
 output/
